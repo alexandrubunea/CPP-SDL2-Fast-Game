@@ -20,5 +20,15 @@ GameObject::~GameObject() {
 
 void GameObject::render(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &rect);
+    SDL_RenderDrawRect(renderer, &rect);
+}
+
+void GameObject::update_position(Utils::Vector2D new_position) {
+    position = new_position;
+    rect.x = (INT_32) position.x;
+    rect.y = (INT_32) position.y;
+}
+
+Utils::Vector2D GameObject::get_position() {
+    return position;
 }

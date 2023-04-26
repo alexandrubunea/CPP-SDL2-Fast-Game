@@ -37,10 +37,26 @@ Application::Application(
     background.w = WINDOW_WIDTH;
     background.h = WINDOW_HEIGHT;
 
+    left_wall.x = left_wall.y = 0;
+    left_wall.h = WINDOW_HEIGHT;
+    left_wall.w = WALL_THICKNESS;
+
+    right_wall.x = WINDOW_WIDTH - WALL_THICKNESS;
+    right_wall.y = 0;
+    right_wall.w = WALL_THICKNESS;
+    right_wall.h = WINDOW_HEIGHT;
+
+    bottom_bar.x = 0;
+    bottom_bar.y = WINDOW_HEIGHT - BOTTOM_BAR_HEIGHT;
+    bottom_bar.w = WINDOW_WIDTH;
+    bottom_bar.h = BOTTOM_BAR_HEIGHT;
+
+    INT_32 random_lane = Utils::random_number(1, (WINDOW_WIDTH - WALL_THICKNESS * 2) / PLAYER_WIDTH);
+
     player = Player(
-        PLAYER_X, 
-        PLAYER_Y, 
-        PLAYER_WIDTH, 
+        WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane),
+        PLAYER_Y,
+        PLAYER_WIDTH,
         PLAYER_HEIGHT
     );
 
@@ -58,7 +74,7 @@ Application::~Application() {
 void Application::__loop__() {
     SDL_Event event;
 
-    const float delta_time = .1f;
+    const float delta_time = .01f;
     float current_time = Utils::hire_time_in_seconds(),
         accumulator = .0f, new_time, frame_time;
 
@@ -81,6 +97,26 @@ void Application::__controller__(SDL_Event& e) {
     while(SDL_PollEvent(&e)) {
         if(e.type == SDL_QUIT)
             WINDOW_STATUS = WINDOW_CLOSED;
+        if(e.type == SDL_KEYDOWN) {
+            switch(e.key.keysym.sym) {
+                case SDLK_a: {
+                    Utils::Vector2D position = player.get_position();
+                    position.x -= PLAYER_WIDTH;
+                    if(position.x >= WALL_THICKNESS)
+                        player.update_position(position);
+
+                    break;
+                }
+                case SDLK_d: {
+                    Utils::Vector2D position = player.get_position();
+                    position.x += PLAYER_WIDTH;
+                    if(position.x < WINDOW_WIDTH - WALL_THICKNESS)
+                        player.update_position(position);
+
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -90,6 +126,12 @@ void Application::__render__() {
     // Background
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(renderer, &background);
+
+    // UI
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &left_wall);
+    SDL_RenderFillRect(renderer, &right_wall);
+    SDL_RenderFillRect(renderer, &bottom_bar);
 
     player.render(renderer);
 

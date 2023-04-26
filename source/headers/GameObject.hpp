@@ -18,4 +18,7 @@ public:
     );
     ~GameObject();
     void render(SDL_Renderer*);
+    void update_position(Utils::Vector2D);
+    
+    Utils::Vector2D get_position();
 };

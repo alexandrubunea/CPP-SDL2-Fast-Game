@@ -13,9 +13,13 @@ private:
 
     SDL_Window *window;
     SDL_Renderer *renderer;
-    SDL_Rect background;
 
     WindowStatus WINDOW_STATUS;
+
+    SDL_Rect background;
+    SDL_Rect left_wall;
+    SDL_Rect right_wall;
+    SDL_Rect bottom_bar;
 
     Player player;
 private:

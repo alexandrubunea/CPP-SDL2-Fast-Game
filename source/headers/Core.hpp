@@ -9,10 +9,13 @@
 #define INT_64 long long int
 #define UINT_64 unsigned long long int
 
-#define PLAYER_WIDTH 25
-#define PLAYER_HEIGHT 50
-#define PLAYER_X 100
-#define PLAYER_Y 100
+#define PLAYER_WIDTH 50
+#define PLAYER_HEIGHT 100
+#define PLAYER_Y 500
+
+#define WALL_THICKNESS 20
+
+#define BOTTOM_BAR_HEIGHT 50
 
 enum WindowStatus {
     WINDOW_RUNNING,
@@ -30,4 +33,5 @@ namespace Utils {
     void print_sdl_error_message(std::string);
     void print_debug_message(std::string);
     float hire_time_in_seconds();
+    INT_32 random_number(INT_32, INT_32);
 };

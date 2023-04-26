@@ -1,4 +1,5 @@
 #include <iostream>
+#include <time.h>
 #include <SDL.h>
 
 #include "../headers/Core.hpp"
@@ -18,4 +19,9 @@ float Utils::hire_time_in_seconds() {
     float t = SDL_GetTicks();
     t *= .001f;
     return t;
+}
+
+INT_32 Utils::random_number(INT_32 from, INT_32 to) {
+    srand(time(NULL));
+    return rand() % (to - from) + from;
 }
