@@ -11,6 +11,8 @@ add_executable(Fast
     source/main.cpp
     source/resources/Application.cpp
     source/resources/Core.cpp
+    source/resources/GameObject.cpp
+    source/resources/Player.cpp
 )
 
 target_link_libraries(Fast ${SDL2_LIBRARIES})

@@ -4,6 +4,7 @@
 #include <SDL.h>
 
 #include "Core.hpp"
+#include "Player.hpp"
 
 class Application {
 private:
@@ -12,8 +13,11 @@ private:
 
     SDL_Window *window;
     SDL_Renderer *renderer;
+    SDL_Rect background;
 
     WindowStatus WINDOW_STATUS;
+
+    Player player;
 private:
     void __loop__();
     void __controller__(SDL_Event&);

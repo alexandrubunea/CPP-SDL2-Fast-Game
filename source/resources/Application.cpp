@@ -1,5 +1,6 @@
 #include "../headers/Application.hpp"
 #include "../headers/Core.hpp"
+#include "../headers/Player.hpp"
 
 
 Application::Application(
@@ -8,7 +9,8 @@ Application::Application(
     std::string window_name
 ):  WINDOW_WIDTH(window_width), 
     WINDOW_HEIGHT(window_height), 
-    WINDOW_NAME(window_name) {
+    WINDOW_NAME(window_name),
+    player(Player(0, 0, 0, 0)) {
     if(SDL_Init(SDL_INIT_VIDEO) > 0) {
         Utils::print_sdl_error_message("An error occurred during SDL_Init.");
         return;
@@ -30,6 +32,17 @@ Application::Application(
     } else Utils::print_debug_message("Renderer intialized sucessfully.");
 
     WINDOW_STATUS = WINDOW_RUNNING;
+
+    background.x = background.y = 0;
+    background.w = WINDOW_WIDTH;
+    background.h = WINDOW_HEIGHT;
+
+    player = Player(
+        PLAYER_X, 
+        PLAYER_Y, 
+        PLAYER_WIDTH, 
+        PLAYER_HEIGHT
+    );
 
     __loop__();
 
@@ -73,6 +86,12 @@ void Application::__controller__(SDL_Event& e) {
 
 void Application::__render__() {
     SDL_RenderClear(renderer);
+
+    // Background
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &background);
+
+    player.render(renderer);
+
     SDL_RenderPresent(renderer);
 }
