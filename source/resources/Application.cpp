@@ -9,7 +9,6 @@ Application::Application(
 ):  WINDOW_WIDTH(window_width), 
     WINDOW_HEIGHT(window_height), 
     WINDOW_NAME(window_name) {
-
     if(SDL_Init(SDL_INIT_VIDEO) > 0) {
         Utils::print_sdl_error_message("An error occurred during SDL_Init.");
         return;
@@ -46,8 +45,21 @@ Application::~Application() {
 void Application::__loop__() {
     SDL_Event event;
 
+    const float delta_time = .1f;
+    float current_time = Utils::hire_time_in_seconds(),
+        accumulator = .0f, new_time, frame_time;
+
     while(WINDOW_STATUS != WINDOW_CLOSED) {
-        __controller__(event);
+        new_time = Utils::hire_time_in_seconds();
+        frame_time = new_time - current_time;
+        current_time = new_time;
+        accumulator += frame_time;
+
+        while(accumulator >= delta_time) {
+            __controller__(event);
+            
+            accumulator -= delta_time;
+        }
         __render__();
     }
 }

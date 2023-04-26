@@ -18,4 +18,5 @@ enum WindowStatus {
 namespace Utils {
     void print_sdl_error_message(std::string);
     void print_debug_message(std::string);
+    float hire_time_in_seconds();
 };
