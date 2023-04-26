@@ -4,9 +4,16 @@ project(Fast VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIRS})
+
 add_executable(Fast 
     source/main.cpp
+    source/resources/Application.cpp
+    source/resources/Core.cpp
 )
+
+target_link_libraries(Fast ${SDL2_LIBRARIES})
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
