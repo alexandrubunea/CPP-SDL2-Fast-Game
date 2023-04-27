@@ -1,5 +1,5 @@
 #include <iostream>
-#include <time.h>
+#include <random>
 #include <SDL.h>
 
 #include "../headers/Core.hpp"
@@ -22,6 +22,9 @@ float Utils::hire_time_in_seconds() {
 }
 
 INT_32 Utils::random_number(INT_32 from, INT_32 to) {
-    srand(time(NULL));
-    return rand() % (to - from) + from;
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<INT_32> dist(from, to);
+
+    return dist(mt);
 }

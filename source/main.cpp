@@ -1,8 +1,5 @@
 #include "headers/Application.hpp"
-
-#define WIN_WIDTH 540
-#define WIN_HEIGHT 700
-#define WIN_NAME "Fast!"
+#include "headers/Core.hpp"
 
 int main(int, char**) {
     Application application(

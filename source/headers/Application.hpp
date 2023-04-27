@@ -1,10 +1,12 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 #include <SDL.h>
 
 #include "Core.hpp"
 #include "Player.hpp"
+#include "Car.hpp"
 
 class Application {
 private:
@@ -22,10 +24,14 @@ private:
     SDL_Rect bottom_bar;
 
     Player player;
+
+    std::vector<Car> cars;
 private:
     void __loop__();
     void __controller__(SDL_Event&);
     void __render__();
+    void __gameplay__();
+    void __spawn_cars__();
 public:
     Application(
         UINT_32,

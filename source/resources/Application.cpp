@@ -1,7 +1,11 @@
+#include <vector>
+#include <algorithm>
+#include <unordered_set>
+
 #include "../headers/Application.hpp"
 #include "../headers/Core.hpp"
 #include "../headers/Player.hpp"
-
+#include "../headers/Car.hpp"
 
 Application::Application(
     UINT_32 window_width,
@@ -51,7 +55,7 @@ Application::Application(
     bottom_bar.w = WINDOW_WIDTH;
     bottom_bar.h = BOTTOM_BAR_HEIGHT;
 
-    INT_32 random_lane = Utils::random_number(1, (WINDOW_WIDTH - WALL_THICKNESS * 2) / PLAYER_WIDTH);
+    INT_32 random_lane = Utils::random_number(1, NUMBER_OF_LANES(WINDOW_WIDTH));
 
     player = Player(
         WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane),
@@ -86,7 +90,8 @@ void Application::__loop__() {
 
         while(accumulator >= delta_time) {
             __controller__(event);
-            
+            __gameplay__();
+
             accumulator -= delta_time;
         }
         __render__();
@@ -115,6 +120,22 @@ void Application::__controller__(SDL_Event& e) {
 
                     break;
                 }
+                case SDLK_w: {
+                    Utils::Vector2D position = player.get_position();
+                    position.y -= ACCELERATION;
+                    if(position.y >= 0)
+                        player.update_position(position);
+
+                    break;
+                }
+                case SDLK_s: {
+                    Utils::Vector2D position = player.get_position();
+                    position.y += ACCELERATION;
+                    if(position.y + PLAYER_HEIGHT <= WINDOW_HEIGHT - BOTTOM_BAR_HEIGHT)
+                        player.update_position(position);
+
+                    break;
+                }
             }
         }
     }
@@ -133,7 +154,53 @@ void Application::__render__() {
     SDL_RenderFillRect(renderer, &right_wall);
     SDL_RenderFillRect(renderer, &bottom_bar);
 
+    // Player
     player.render(renderer);
 
+    // Cars
+    for(Car car : cars)
+        car.render(renderer);
+
     SDL_RenderPresent(renderer);
+}
+
+void Application::__gameplay__() {
+    Utils::Vector2D position;
+    for(Car &car : cars) {
+        position = car.get_position();
+        position.y += BASE_SPEED;
+        car.update_position(position);
+    }
+    
+    cars.erase(std::remove_if(cars.begin(), cars.end(),
+        [](Car i) { return i.get_position().y >= WIN_HEIGHT; }), cars.end());
+
+    __spawn_cars__();
+}
+
+void Application::__spawn_cars__() {
+    if(cars.size() > MINIMUM_CARS_ON_SCREEN) return;
+
+    UINT_32 cars_to_spawn = MINIMUM_CARS_ON_SCREEN - cars.size(),
+        random_lane;
+    std::unordered_set<UINT_32> occupied_lanes;
+
+    /*
+        Bug:
+            All the cars are spawning on the same position dispite
+        of the random_lane to have a different value all the time.
+    */
+
+    for(UINT_32 i = 0; i < cars_to_spawn; ++i) {
+        random_lane = Utils::random_number(1, NUMBER_OF_LANES(WINDOW_WIDTH));
+        if(occupied_lanes.find(random_lane) == occupied_lanes.end()) {
+            occupied_lanes.insert(random_lane);
+            cars.push_back(Car(
+                WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane),
+                0,
+                PLAYER_WIDTH,
+                PLAYER_HEIGHT
+            ));
+        }
+    }
 }
