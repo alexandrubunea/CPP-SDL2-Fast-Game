@@ -58,9 +58,9 @@ Application::Application(
     INT_32 random_lane = Utils::random_number(1, NUMBER_OF_LANES(WINDOW_WIDTH));
 
     player = Player(
-        WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane),
+        WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane) + CAR_DISTANCE / 2,
         PLAYER_Y,
-        PLAYER_WIDTH,
+        PLAYER_WIDTH - CAR_DISTANCE,
         PLAYER_HEIGHT
     );
 
@@ -165,6 +165,13 @@ void Application::__render__() {
 }
 
 void Application::__gameplay__() {
+    for(Car &car : cars) {
+        if(player.collide(car))
+            car.change_color({255, 0, 0, 255});
+        else
+            car.change_color({255, 255, 255, 255});
+    }
+
     Utils::Vector2D position;
     for(Car &car : cars) {
         position = car.get_position();
@@ -182,25 +189,33 @@ void Application::__spawn_cars__() {
     if(cars.size() > MINIMUM_CARS_ON_SCREEN) return;
 
     UINT_32 cars_to_spawn = MINIMUM_CARS_ON_SCREEN - cars.size(),
-        random_lane;
+        random_lane, random_y;
+    bool doesnt_collide = true;
+    Car new_car(0, 0, 0, 0);
     std::unordered_set<UINT_32> occupied_lanes;
-
-    /*
-        Bug:
-            All the cars are spawning on the same position dispite
-        of the random_lane to have a different value all the time.
-    */
 
     for(UINT_32 i = 0; i < cars_to_spawn; ++i) {
         random_lane = Utils::random_number(1, NUMBER_OF_LANES(WINDOW_WIDTH));
-        if(occupied_lanes.find(random_lane) == occupied_lanes.end()) {
+        random_y = Utils::random_number(PLAYER_HEIGHT, PLAYER_HEIGHT * 10);
+        doesnt_collide = true;
+
+        new_car = Car(
+            WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane) + CAR_DISTANCE / 2,
+            -(float) random_y,
+            PLAYER_WIDTH - CAR_DISTANCE,
+            PLAYER_HEIGHT
+        );
+
+        for(Car car : cars) {
+            if(new_car.collide(car)) {
+                doesnt_collide = false;
+                break;
+            }
+        }
+
+        if(occupied_lanes.find(random_lane) == occupied_lanes.end() && doesnt_collide) {
             occupied_lanes.insert(random_lane);
-            cars.push_back(Car(
-                WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane),
-                0,
-                PLAYER_WIDTH,
-                PLAYER_HEIGHT
-            ));
+            cars.push_back(new_car);
         }
     }
 }

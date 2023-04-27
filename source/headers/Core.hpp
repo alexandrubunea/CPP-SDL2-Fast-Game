@@ -17,6 +17,8 @@
 #define PLAYER_HEIGHT 100
 #define PLAYER_Y 500
 
+#define CAR_DISTANCE 10
+
 #define WALL_THICKNESS 20
 
 #define BOTTOM_BAR_HEIGHT 50
@@ -28,7 +30,7 @@
 #define BASE_SPEED .3
 #define ACCELERATION 20
 
-#define MINIMUM_CARS_ON_SCREEN 5
+#define MINIMUM_CARS_ON_SCREEN 20
 
 enum WindowStatus {
     WINDOW_RUNNING,
