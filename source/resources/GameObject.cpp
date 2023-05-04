@@ -45,19 +45,12 @@ void GameObject::change_color(SDL_Color new_color) {
 }
 
 bool GameObject::collide(GameObject &obj) {
-    if(position.x >= obj.get_position().x && 
-    position.x <= obj.get_position().x + obj.get_width() &&
-    position.y >= obj.get_position().y &&
-    position.y <= obj.get_position().y + obj.get_height())
-        return true;
-    
-    if(obj.get_position().x >= position.x &&
-    obj.get_position().x <= position.x + WIDTH &&
-    obj.get_position().y >= position.y &&
-    obj.get_position().y <= position.y + HEIGHT)
-        return true;
-    
-    return false;
+    return (
+        (position.x < obj.get_position().x + obj.get_width()) &&
+        (position.x + WIDTH > obj.get_position().x) &&
+        (position.y < obj.get_position().y + obj.get_height()) &&
+        (position.y + HEIGHT > obj.get_position().y)
+    );
 }
 
 Utils::Vector2D GameObject::get_position() {

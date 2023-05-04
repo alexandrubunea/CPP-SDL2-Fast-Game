@@ -6,6 +6,7 @@
 #include "../headers/Core.hpp"
 #include "../headers/Player.hpp"
 #include "../headers/Car.hpp"
+#include "../headers/Pickup.hpp"
 
 Application::Application(
     UINT_32 window_width,
@@ -64,6 +65,8 @@ Application::Application(
         PLAYER_HEIGHT
     );
 
+    speed_factor = 1.0f;
+
     __loop__();
 
     SDL_Quit();
@@ -105,35 +108,39 @@ void Application::__controller__(SDL_Event& e) {
         if(e.type == SDL_KEYDOWN) {
             switch(e.key.keysym.sym) {
                 case SDLK_a: {
-                    Utils::Vector2D position = player.get_position();
-                    position.x -= PLAYER_WIDTH;
-                    if(position.x >= WALL_THICKNESS)
-                        player.update_position(position);
-
+                    keyboard[KEY_LEFT] = true;
                     break;
                 }
                 case SDLK_d: {
-                    Utils::Vector2D position = player.get_position();
-                    position.x += PLAYER_WIDTH;
-                    if(position.x < WINDOW_WIDTH - WALL_THICKNESS)
-                        player.update_position(position);
-
+                    keyboard[KEY_RIGHT] = true;
                     break;
                 }
                 case SDLK_w: {
-                    Utils::Vector2D position = player.get_position();
-                    position.y -= ACCELERATION;
-                    if(position.y >= 0)
-                        player.update_position(position);
-
+                    keyboard[KEY_UP] = true;
                     break;
                 }
                 case SDLK_s: {
-                    Utils::Vector2D position = player.get_position();
-                    position.y += ACCELERATION;
-                    if(position.y + PLAYER_HEIGHT <= WINDOW_HEIGHT - BOTTOM_BAR_HEIGHT)
-                        player.update_position(position);
-
+                    keyboard[KEY_DOWN] = true;
+                    break;
+                }
+            }
+        }
+        if(e.type == SDL_KEYUP) {
+            switch(e.key.keysym.sym) {
+                case SDLK_a: {
+                    keyboard[KEY_LEFT] = false;
+                    break;
+                }
+                case SDLK_d: {
+                    keyboard[KEY_RIGHT] = false;
+                    break;
+                }
+                case SDLK_w: {
+                    keyboard[KEY_UP] = false;
+                    break;
+                }
+                case SDLK_s: {
+                    keyboard[KEY_DOWN] = false;
                     break;
                 }
             }
@@ -161,10 +168,74 @@ void Application::__render__() {
     for(Car car : cars)
         car.render(renderer);
 
+    // Pickups
+    for(Pickup pickup : pickups)
+        pickup.render(renderer);
+
     SDL_RenderPresent(renderer);
 }
 
 void Application::__gameplay__() {
+    if(keyboard[KEY_LEFT]) {
+        Utils::Vector2D position = player.get_position();
+        position.x -= MOVMENT_SPEED;
+        if(position.x >= WALL_THICKNESS)
+            player.update_position(position);
+    }
+    if(keyboard[KEY_RIGHT]) {
+        Utils::Vector2D position = player.get_position();
+        position.x += MOVMENT_SPEED;
+        if(position.x + PLAYER_WIDTH - CAR_DISTANCE <= WINDOW_WIDTH - WALL_THICKNESS)
+            player.update_position(position);
+    }
+    if(keyboard[KEY_UP]) {
+        Utils::Vector2D position = player.get_position();
+        position.y -= MOVMENT_SPEED;
+        if(position.y >= 0)
+            player.update_position(position);
+    }
+    if(keyboard[KEY_DOWN]) {
+        Utils::Vector2D position = player.get_position();
+        position.y += MOVMENT_SPEED;
+        if(position.y + PLAYER_HEIGHT <= WINDOW_HEIGHT - BOTTOM_BAR_HEIGHT)
+            player.update_position(position);
+    }
+
+    Utils::Vector2D position;
+    for(Car &car : cars) {
+        position = car.get_position();
+        position.y += BASE_SPEED * speed_factor;
+        car.update_position(position);
+    }
+
+    for(Pickup &pickup : pickups) {
+        position = pickup.get_position();
+        position.y += BASE_SPEED * speed_factor;
+        pickup.update_position(position);
+    }
+
+    UINT_32 score = 
+        std::count_if(cars.begin(), cars.end(), [](Car i) { return i.get_position().y >= WIN_HEIGHT; });
+    player.increase_score(score);
+
+    if(player.get_score() % 100 == 0 && player.get_score() && speed_factor < 2.0f)
+        speed_factor += .1f;
+
+    if(score)
+        cars.erase(std::remove_if(cars.begin(), cars.end(),
+            [](Car i) { return i.get_position().y >= WIN_HEIGHT; }), cars.end());
+    
+    std::unordered_set<Pickup, pickup_hash, pickup_equal> collided_pickups;
+    for(Pickup &pickup : pickups) {
+        if(player.collide(pickup)) {
+            collided_pickups.insert(pickup);
+        }
+    }
+    pickups.erase(std::remove_if(pickups.begin(), pickups.end(),
+        [&collided_pickups](Pickup i) { return collided_pickups.find(i) != collided_pickups.end(); }), pickups.end());
+    pickups.erase(std::remove_if(pickups.begin(), pickups.end(),
+        [](Pickup i) { return i.get_position().y >= WIN_HEIGHT; }), pickups.end());
+
     for(Car &car : cars) {
         if(player.collide(car))
             car.change_color({255, 0, 0, 255});
@@ -172,23 +243,21 @@ void Application::__gameplay__() {
             car.change_color({255, 255, 255, 255});
     }
 
-    Utils::Vector2D position;
-    for(Car &car : cars) {
-        position = car.get_position();
-        position.y += BASE_SPEED;
-        car.update_position(position);
+    for(Pickup &pickup : pickups) {
+        if(player.collide(pickup))
+            pickup.change_color({255, 0, 0, 255});
+        else
+            pickup.change_color({255, 255, 255, 255});
     }
-    
-    cars.erase(std::remove_if(cars.begin(), cars.end(),
-        [](Car i) { return i.get_position().y >= WIN_HEIGHT; }), cars.end());
 
     __spawn_cars__();
+    __spawn_pickups__();
 }
 
 void Application::__spawn_cars__() {
-    if(cars.size() > MINIMUM_CARS_ON_SCREEN) return;
+    if(cars.size() > MAX_CARS_ON_SCREEN) return;
 
-    UINT_32 cars_to_spawn = MINIMUM_CARS_ON_SCREEN - cars.size(),
+    UINT_32 cars_to_spawn = MAX_CARS_ON_SCREEN - cars.size(),
         random_lane, random_y;
     bool doesnt_collide = true;
     Car new_car(0, 0, 0, 0);
@@ -218,4 +287,47 @@ void Application::__spawn_cars__() {
             cars.push_back(new_car);
         }
     }
+}
+
+void Application::__spawn_pickups__() {
+    if(pickups.size() > MAX_PICKUPS_ON_SCREEN) return;
+
+    UINT_32 pickups_to_spawn = MAX_PICKUPS_ON_SCREEN - pickups.size(),
+        random_x, random_y;
+    std::unordered_set<std::pair<UINT_32, UINT_32>, Utils::pair_hash> occupied_positions;
+
+    for(UINT_32 i = 0; i < pickups_to_spawn;) {
+        random_x = Utils::random_number(WALL_THICKNESS, WINDOW_WIDTH - WALL_THICKNESS - PICK_UP_WIDTH);
+        random_y = Utils::random_number(-100, 0);
+        if(
+            occupied_positions.find({random_x, random_y}) == occupied_positions.end() &&
+            occupied_positions.find({random_x + PICK_UP_WIDTH, random_y}) == occupied_positions.end() &&
+            occupied_positions.find({random_x, random_y + PICK_UP_HEIGHT}) == occupied_positions.end() &&
+            occupied_positions.find({random_x + PICK_UP_WIDTH, random_y + PICK_UP_HEIGHT}) == occupied_positions.end() &&
+            occupied_positions.find({random_x - PICK_UP_WIDTH, random_y}) == occupied_positions.end() &&
+            occupied_positions.find({random_x, random_y - PICK_UP_HEIGHT}) == occupied_positions.end() &&
+            occupied_positions.find({random_x - PICK_UP_WIDTH, random_y - PICK_UP_HEIGHT}) == occupied_positions.end() &&
+            occupied_positions.find({random_x + PICK_UP_WIDTH, random_y - PICK_UP_HEIGHT}) == occupied_positions.end() &&
+            occupied_positions.find({random_x - PICK_UP_WIDTH, random_y + PICK_UP_HEIGHT}) == occupied_positions.end()
+            ) {
+            occupied_positions.insert({random_x, random_y});
+            pickups.push_back(Pickup(random_x, random_y, PICK_UP_WIDTH, PICK_UP_HEIGHT));
+
+            if(__collide_with_cars__(pickups.back())) {
+                pickups.pop_back();
+                occupied_positions.erase({random_x, random_y});
+                continue;
+            }
+
+            ++i;
+        }
+    }
+}
+
+bool Application::__collide_with_cars__(GameObject &object) {
+    for(Car &car : cars) {
+        if(object.collide(car))
+            return true;
+    }
+    return false;
 }
