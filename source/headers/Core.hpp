@@ -24,6 +24,7 @@
 #define PLAYER_WIDTH 50
 #define PLAYER_HEIGHT 100
 #define PLAYER_Y 500
+#define PLAYER_LIVES_CAP 5
 
 // Pickups configuration
 #define PICK_UP_WIDTH 10
@@ -50,6 +51,10 @@
 #define MAX_CARS_ON_SCREEN 15
 #define MAX_PICKUPS_ON_SCREEN 5
 
+#define SLOW_TIME_DURATION 5
+
+#define INITIAL_GAME_SPEED 2
+
 // Key configuration
 #define NUMBER_OF_KEYS 4
 #define KEY_UP 0
@@ -74,8 +79,9 @@ enum WindowStatus {
     It can be either health, freeze time or clear road.
 */
 enum PickupType {
+    SCORE,
     HEALTH,
-    FREEZE_TIME,
+    SLOW_TIME,
     CLEAR_ROAD
 };
 

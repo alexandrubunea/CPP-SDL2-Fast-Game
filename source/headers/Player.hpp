@@ -15,6 +15,7 @@
 class Player : public GameObject {
 private:
     UINT_32 score; // score
+    UINT_32 lives; // lives
 public:
     /*
         Default Player constructor
@@ -50,4 +51,19 @@ public:
         Returns the score of the player
     */
     UINT_32 get_score();
+
+    /*
+        Increases the lives of the player
+    */
+    void increase_lives();
+
+    /*
+        Decreases the lives of the player
+    */
+    void decrease_lives();
+
+    /*
+        Returns the lives of the player
+    */
+    UINT_32 get_lives();
 };

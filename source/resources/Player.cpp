@@ -27,3 +27,15 @@ void Player::increase_score(UINT_32 amount) {
 UINT_32 Player::get_score() {
     return score;
 }
+
+void Player::increase_lives() {
+    lives++;
+}
+
+void Player::decrease_lives() {
+    lives--;
+}
+
+UINT_32 Player::get_lives() {
+    return lives;
+}

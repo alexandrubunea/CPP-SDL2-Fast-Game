@@ -1,6 +1,8 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_set>
+#include <thread>
+#include <chrono>
 
 #include "../headers/Application.hpp"
 #include "../headers/Core.hpp"
@@ -39,7 +41,7 @@ Application::Application(
     } else Utils::print_debug_message("Renderer intialized sucessfully.");
 
     // Set the window status to running
-    WINDOW_STATUS = WINDOW_RUNNING;
+    WINDOW_STATUS = WindowStatus::WINDOW_RUNNING;
 
     // Initialize the background, the walls and the bottom bar
     background.x = background.y = 0;
@@ -71,7 +73,7 @@ Application::Application(
     );
 
     // Initialize the speed factor
-    speed_factor = 1.0f;
+    speed_factor = INITIAL_GAME_SPEED;
 
     // Start the game loop
     __loop__();
@@ -97,7 +99,7 @@ void Application::__loop__() {
         accumulator = .0f, new_time, frame_time;
 
     // The game loop
-    while(WINDOW_STATUS != WINDOW_CLOSED) {
+    while(WINDOW_STATUS != WindowStatus::WINDOW_CLOSED) {
 
         // Calculate the time between each frame
         new_time = Utils::hire_time_in_seconds();
@@ -254,8 +256,8 @@ void Application::__gameplay__() {
     player.increase_score(score);
 
     // Increase the speed factor every 100 points
-    if(player.get_score() % 100 == 0 && player.get_score() && speed_factor < 2.0f)
-        speed_factor += .1f;
+    if(player.get_score() % 100 == 0 && player.get_score() && speed_factor < INITIAL_GAME_SPEED * 4)
+        speed_factor += .5f;
 
     // Check if there are any cars that passed the bottom bar to remove them
     if(score)
@@ -269,6 +271,34 @@ void Application::__gameplay__() {
     for(Pickup &pickup : pickups) {
         if(player.collide(pickup)) {
             collided_pickups.insert(pickup);
+
+            switch(pickup.get_type()) {
+                case PickupType::SCORE: {
+                    player.increase_score(2);
+                    break;
+                }
+                case PickupType::HEALTH: {
+                    if(player.get_lives() < PLAYER_LIVES_CAP)
+                        player.increase_lives();
+                    else 
+                        player.increase_score(2); // Give the player 5 points if the lives are already at the maximum
+                    break;
+                }
+                case PickupType::CLEAR_ROAD: {
+                    // Clear the road
+                    cars.erase(cars.begin(), cars.end());
+                    break;
+                }
+                case PickupType::SLOW_TIME: {
+                    // Slow down the cars
+                    if(speed_factor >= INITIAL_GAME_SPEED) {
+                        std::thread slow_down(&Application::__slow_down_cars__, this);
+                        slow_down.detach();
+                    } else
+                        player.increase_score(2); // Give the player 5 points if the speed is already at the minimum
+                    break;
+                }
+            }
         }
     }
     pickups.erase(std::remove_if(pickups.begin(), pickups.end(),
@@ -282,6 +312,16 @@ void Application::__gameplay__() {
             car.change_color({255, 0, 0, 255});
         else
             car.change_color({255, 255, 255, 255});
+    }
+
+    // Decrease the player lives if it collides with a car
+    if(__collide_with_cars__(player)) {
+        player.decrease_lives();
+        if(!player.get_lives()) {
+            // Game over
+            // At the moment, the game will continue even if the player loses all of his lives
+            player.increase_lives();
+        }
     }
 
     // Spawn new cars and pickups
@@ -384,4 +424,13 @@ bool Application::__collide_with_cars__(GameObject &object) {
             return true;
     }
     return false;
+}
+
+void Application::__slow_down_cars__() {
+    float original_speed_factor = speed_factor;
+
+    speed_factor = 0.5;
+    std::this_thread::sleep_for(std::chrono::seconds(SLOW_TIME_DURATION));
+
+    speed_factor = original_speed_factor;
 }

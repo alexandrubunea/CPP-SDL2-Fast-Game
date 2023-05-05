@@ -93,6 +93,12 @@ private:
         @GameObject&: the object to check the collision with
     */
     bool __collide_with_cars__(GameObject&);
+
+    /*
+        __slow_down_cars__ method
+        This method slows down the cars.
+    */
+    void __slow_down_cars__();
 public:
     /*
         Application constructor
