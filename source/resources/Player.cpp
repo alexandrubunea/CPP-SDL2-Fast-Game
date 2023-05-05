@@ -3,6 +3,10 @@
 #include "../headers/Player.hpp"
 #include "../headers/Core.hpp"
 
+Player::Player(): GameObject(0, 0, Utils::Vector2D(0, 0)) {
+    score = 0;
+}
+
 Player::Player(
     float x,
     float y,
