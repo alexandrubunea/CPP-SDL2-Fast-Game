@@ -1,15 +1,14 @@
-#include <SDL.h>
-
-#include "../headers/Core.hpp"
 #include "../headers/GameObject.hpp"
 
 GameObject::GameObject(
     UINT_32 width,
     UINT_32 height,
-    Utils::Vector2D pos
+    Utils::Vector2D pos,
+    SDL_Rect txt_rect
 ):  WIDTH(width),
     HEIGHT(height),
-    position(pos) {
+    position(pos),
+    texture_rect(txt_rect) {
     rect.x = (INT_32) position.x,
     rect.y = (INT_32) position.y,
     rect.w = (INT_32) WIDTH,
@@ -22,9 +21,13 @@ GameObject::~GameObject() {
 
 };
 
-void GameObject::render(SDL_Renderer* renderer) {
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderDrawRect(renderer, &rect);
+void GameObject::render(SDL_Renderer* renderer, SDL_Texture* sprite_sheet) {
+    SDL_RenderCopy(
+        renderer,
+        sprite_sheet,
+        &texture_rect,
+        &rect
+    );
 }
 
 void GameObject::update_position(Utils::Vector2D new_position) {

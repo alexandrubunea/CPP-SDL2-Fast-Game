@@ -6,6 +6,7 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
 
 // Window configuration
 #define WIN_WIDTH 540
@@ -46,7 +47,7 @@
             (x - WALL_THICKNESS * 2) / PLAYER_WIDTH
 
 // Gameplay configuration
-#define BASE_SPEED .3
+#define BASE_SPEED 1
 #define MOVMENT_SPEED 5
 #define MAX_CARS_ON_SCREEN 15
 #define MAX_PICKUPS_ON_SCREEN 5
@@ -62,34 +63,40 @@
 #define KEY_LEFT 2
 #define KEY_RIGHT 3
 
-/*
-    WindowStatus enum
-    This enum is used to check the status of the window.
-    It can be either running, closed or paused.
-*/
-enum WindowStatus {
-    WINDOW_RUNNING,
-    WINDOW_PAUSED,
-    WINDOW_CLOSED
-};
-
-/*
-    PickupType enum
-    This enum is used to check the type of the pickup.
-    It can be either health, freeze time or clear road.
-*/
-enum PickupType {
-    SCORE,
-    HEALTH,
-    SLOW_TIME,
-    CLEAR_ROAD
-};
+// SPRITES & TEXTURES
+#define CAR_SPRITES_NUMBER 26
+#define PLAYER_SPRITES_NUMBER 4
+#define PICKUP_SPRITES_NUMBER 4
 
 /*
     Utils namespace
     This namespace contains all the utility functions
 */
 namespace Utils {
+
+    /*
+        WindowStatus enum
+        This enum is used to check the status of the window.
+        It can be either running, closed or paused.
+    */
+    enum WindowStatus {
+        WINDOW_RUNNING,
+        WINDOW_PAUSED,
+        WINDOW_CLOSED
+    };
+
+    /*
+        PickupType enum
+        This enum is used to check the type of the pickup.
+        It can be either health, freeze time or clear road.
+    */
+    enum PickupType {
+        SCORE,
+        HEALTH,
+        SLOW_TIME,
+        CLEAR_ROAD
+    };
+
     /*
         Vector2D struct
         This struct is used to represent a 2D vector.
@@ -118,12 +125,42 @@ namespace Utils {
         }
     };
 
+    // Ofstream for the log file
+    extern std::ofstream log_file;
+
+    // Debug mode flag
+    extern bool DEBUG_MODE; 
+
+    // Crash flag
+    extern bool CRASH;
+
+    /*
+        set_crash function
+        This function sets the crash flag.
+        @param crash: the crash flag
+    */
+    void set_crash(bool);
+
     /*
         print_sdl_error_message function
         This function prints an SDL error message.
         @param message: the message to print
     */
     void print_sdl_error_message(std::string);
+
+    /*
+        print_sdl_image_error_message function
+        This function prints an SDL_image error message.
+        @param message: the message to print
+    */
+    void print_sdl_image_error_message(std::string);
+
+    /*
+        set_debug_mode function
+        This function sets the debug mode flag.
+        @param debug_mode: the debug mode flag
+    */
+    void set_debug_mode(bool);
 
     /*
         print_debug_message function

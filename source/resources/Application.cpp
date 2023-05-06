@@ -1,14 +1,10 @@
-#include <vector>
-#include <algorithm>
 #include <unordered_set>
+#include <algorithm>
 #include <thread>
 #include <chrono>
+#include <bitset>
 
 #include "../headers/Application.hpp"
-#include "../headers/Core.hpp"
-#include "../headers/Player.hpp"
-#include "../headers/Car.hpp"
-#include "../headers/Pickup.hpp"
 
 Application::Application(
     UINT_32 window_width,
@@ -22,6 +18,12 @@ Application::Application(
         Utils::print_sdl_error_message("An error occurred during SDL_Init.");
         return;
     } else Utils::print_debug_message("SDL was initialized successfully");
+
+    // Initialize SDL_Image
+    if((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != IMG_INIT_PNG) {
+        Utils::print_sdl_error_message("An error occurred during IMG_Init.");
+        return;
+    } else Utils::print_debug_message("SDL_Image was initialized successfully.");
 
     // Initialize SDL_CreateWindow
     window = SDL_CreateWindow(WINDOW_NAME.c_str(), 
@@ -41,12 +43,12 @@ Application::Application(
     } else Utils::print_debug_message("Renderer intialized sucessfully.");
 
     // Set the window status to running
-    WINDOW_STATUS = WindowStatus::WINDOW_RUNNING;
+    WINDOW_STATUS = Utils::WindowStatus::WINDOW_RUNNING;
 
     // Initialize the background, the walls and the bottom bar
-    background.x = background.y = 0;
-    background.w = WINDOW_WIDTH;
-    background.h = WINDOW_HEIGHT;
+    background_rect.x = background_rect.y = 0;
+    background_rect.w = WINDOW_WIDTH;
+    background_rect.h = WINDOW_HEIGHT;
 
     left_wall.x = left_wall.y = 0;
     left_wall.h = WINDOW_HEIGHT;
@@ -63,23 +65,19 @@ Application::Application(
     bottom_bar.h = BOTTOM_BAR_HEIGHT;
 
     // Initialize the player
-    INT_32 random_lane = Utils::random_number(1, NUMBER_OF_LANES(WINDOW_WIDTH));
-
-    player = Player(
-        WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane) + CAR_DISTANCE / 2,
-        PLAYER_Y,
-        PLAYER_WIDTH - CAR_DISTANCE,
-        PLAYER_HEIGHT
-    );
+    __init_player__();
 
     // Initialize the speed factor
     speed_factor = INITIAL_GAME_SPEED;
 
+    // Load the spritesheets
+    __load_spritesheets__();
+
+    // Print the debug message that the application was initialized successfully
+    Utils::print_debug_message("Application initialized successfully.");
+
     // Start the game loop
     __loop__();
-
-    // Destroy the window and the renderer
-    SDL_Quit();
 }
 
 Application::~Application() {
@@ -87,6 +85,12 @@ Application::~Application() {
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
+
+    if(Utils::CRASH)
+        Utils::print_debug_message("Application crashed.");
+
+    // Print the debug message that the application was destroyed successfully
+    Utils::print_debug_message("Application destroyed successfully.");
 }
 
 void Application::__loop__() {
@@ -99,7 +103,7 @@ void Application::__loop__() {
         accumulator = .0f, new_time, frame_time;
 
     // The game loop
-    while(WINDOW_STATUS != WindowStatus::WINDOW_CLOSED) {
+    while(WINDOW_STATUS != Utils::WindowStatus::WINDOW_CLOSED) {
 
         // Calculate the time between each frame
         new_time = Utils::hire_time_in_seconds();
@@ -122,8 +126,12 @@ void Application::__controller__(SDL_Event& e) {
     while(SDL_PollEvent(&e)) {
 
         // If the user closes the window, set the window status to closed
-        if(e.type == SDL_QUIT)
-            WINDOW_STATUS = WINDOW_CLOSED;
+        if(e.type == SDL_QUIT) {
+            WINDOW_STATUS = Utils::WindowStatus::WINDOW_CLOSED;
+            Utils::print_debug_message("Window closed by the user.");
+            Utils::set_crash(false);
+            break;
+        }
         
         // If the user presses a key, handle the key press
         if(e.type == SDL_KEYDOWN) {
@@ -142,6 +150,13 @@ void Application::__controller__(SDL_Event& e) {
                 }
                 case SDLK_s: {
                     keyboard[KEY_DOWN] = true;
+                    break;
+                }
+                case SDLK_ESCAPE: {
+                    if(WINDOW_STATUS == Utils::WindowStatus::WINDOW_PAUSED)
+                        WINDOW_STATUS = Utils::WindowStatus::WINDOW_RUNNING;
+                    else if(WINDOW_STATUS == Utils::WindowStatus::WINDOW_RUNNING)
+                        WINDOW_STATUS = Utils::WindowStatus::WINDOW_PAUSED;
                     break;
                 }
             }
@@ -176,31 +191,32 @@ void Application::__render__() {
     SDL_RenderClear(renderer);
 
     // Background
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderFillRect(renderer, &background);
-
-    // UI
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &left_wall);
-    SDL_RenderFillRect(renderer, &right_wall);
-    SDL_RenderFillRect(renderer, &bottom_bar);
+    SDL_RenderCopy(renderer, background, NULL, &background_rect);
 
     // Player
-    player.render(renderer);
+    player.render(renderer, cars_spritesheet);
 
     // Cars
     for(Car car : cars)
-        car.render(renderer);
+        car.render(renderer, cars_spritesheet);
 
     // Pickups
     for(Pickup pickup : pickups)
-        pickup.render(renderer);
+        pickup.render(renderer, pickups_spritesheet);
+
+        // UI
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &bottom_bar);
 
     // Present the renderer
     SDL_RenderPresent(renderer);
 }
 
 void Application::__gameplay__() {
+    // If the window is paused, don't update the game
+    if(WINDOW_STATUS == Utils::WindowStatus::WINDOW_PAUSED)
+        return;
+
     /*
         Handle the player movment
     */
@@ -235,7 +251,7 @@ void Application::__gameplay__() {
     Utils::Vector2D position;
     for(Car &car : cars) {
         position = car.get_position();
-        position.y += BASE_SPEED * speed_factor;
+        position.y += (BASE_SPEED * speed_factor) / 2;
         car.update_position(position);
     }
 
@@ -244,7 +260,7 @@ void Application::__gameplay__() {
     */
     for(Pickup &pickup : pickups) {
         position = pickup.get_position();
-        position.y += BASE_SPEED * speed_factor;
+        position.y += (BASE_SPEED * speed_factor) / 2;
         pickup.update_position(position);
     }
 
@@ -256,8 +272,8 @@ void Application::__gameplay__() {
     player.increase_score(score);
 
     // Increase the speed factor every 100 points
-    if(player.get_score() % 100 == 0 && player.get_score() && speed_factor < INITIAL_GAME_SPEED * 4)
-        speed_factor += .5f;
+    if(player.get_score() % 300 == 0 && player.get_score() && speed_factor < INITIAL_GAME_SPEED * 4)
+        speed_factor += .05f;
 
     // Check if there are any cars that passed the bottom bar to remove them
     if(score)
@@ -273,23 +289,23 @@ void Application::__gameplay__() {
             collided_pickups.insert(pickup);
 
             switch(pickup.get_type()) {
-                case PickupType::SCORE: {
+                case Utils::PickupType::SCORE: {
                     player.increase_score(2);
                     break;
                 }
-                case PickupType::HEALTH: {
+                case Utils::PickupType::HEALTH: {
                     if(player.get_lives() < PLAYER_LIVES_CAP)
                         player.increase_lives();
                     else 
                         player.increase_score(2); // Give the player 5 points if the lives are already at the maximum
                     break;
                 }
-                case PickupType::CLEAR_ROAD: {
+                case Utils::PickupType::CLEAR_ROAD: {
                     // Clear the road
                     cars.erase(cars.begin(), cars.end());
                     break;
                 }
-                case PickupType::SLOW_TIME: {
+                case Utils::PickupType::SLOW_TIME: {
                     // Slow down the cars
                     if(speed_factor >= INITIAL_GAME_SPEED) {
                         std::thread slow_down(&Application::__slow_down_cars__, this);
@@ -334,23 +350,32 @@ void Application::__spawn_cars__() {
     if(cars.size() > MAX_CARS_ON_SCREEN) return;
 
     UINT_32 cars_to_spawn = MAX_CARS_ON_SCREEN - cars.size(),
-        random_lane, random_y;
+        random_lane, random_y, random_texture;
+    SDL_Rect texture_rect;
     bool doesnt_collide = true;
-    Car new_car(0, 0, 0, 0);
+    Car new_car(0, 0, 0, 0, {0, 0, 0, 0});
     std::unordered_set<UINT_32> occupied_lanes;
 
     for(UINT_32 i = 0; i < cars_to_spawn; ++i) {
         // Generate a random lane and y position
         random_lane = Utils::random_number(1, NUMBER_OF_LANES(WINDOW_WIDTH));
         random_y = Utils::random_number(PLAYER_HEIGHT, PLAYER_HEIGHT * 10);
+        random_texture = Utils::random_number(0, CAR_SPRITES_NUMBER - 1);
         doesnt_collide = true;
+
+        // Set the texture rect
+        texture_rect.x = car_sprites[random_texture][0];
+        texture_rect.y = car_sprites[random_texture][1];
+        texture_rect.w = car_sprites[random_texture][2];
+        texture_rect.h = car_sprites[random_texture][3];
 
         // Check if the new car collides with any of the existing cars
         new_car = Car(
             WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane) + CAR_DISTANCE / 2,
             -(float) random_y,
             PLAYER_WIDTH - CAR_DISTANCE,
-            PLAYER_HEIGHT
+            PLAYER_HEIGHT,
+            texture_rect
         );
 
         // Check if the new car collides with any of the existing cars
@@ -373,8 +398,11 @@ void Application::__spawn_pickups__() {
     if(pickups.size() > MAX_PICKUPS_ON_SCREEN) return;
 
     UINT_32 pickups_to_spawn = MAX_PICKUPS_ON_SCREEN - pickups.size(),
-        random_x, random_y;
-    
+        random_x, random_y, chance;
+
+    SDL_Rect texture_rect;
+    Utils::PickupType type;
+
     // Check if the new pickup collides with any of the existing pickups
     std::unordered_set<std::pair<UINT_32, UINT_32>, Utils::pair_hash> occupied_positions;
 
@@ -388,19 +416,58 @@ void Application::__spawn_pickups__() {
             The pickup is a rectangle with the width of PICK_UP_WIDTH and the height of PICK_UP_HEIGHT
             The pickup is spawned in the top left corner of the rectangle
         */
-        if(
-            occupied_positions.find({random_x, random_y}) == occupied_positions.end() &&
-            occupied_positions.find({random_x + PICK_UP_WIDTH, random_y}) == occupied_positions.end() &&
-            occupied_positions.find({random_x, random_y + PICK_UP_HEIGHT}) == occupied_positions.end() &&
-            occupied_positions.find({random_x + PICK_UP_WIDTH, random_y + PICK_UP_HEIGHT}) == occupied_positions.end() &&
-            occupied_positions.find({random_x - PICK_UP_WIDTH, random_y}) == occupied_positions.end() &&
-            occupied_positions.find({random_x, random_y - PICK_UP_HEIGHT}) == occupied_positions.end() &&
-            occupied_positions.find({random_x - PICK_UP_WIDTH, random_y - PICK_UP_HEIGHT}) == occupied_positions.end() &&
-            occupied_positions.find({random_x + PICK_UP_WIDTH, random_y - PICK_UP_HEIGHT}) == occupied_positions.end() &&
-            occupied_positions.find({random_x - PICK_UP_WIDTH, random_y + PICK_UP_HEIGHT}) == occupied_positions.end()
-            ) {
+       bool occupied = false;
+       for(int dx : {-PICK_UP_WIDTH, 0, PICK_UP_WIDTH})
+            for(int dy : {-PICK_UP_HEIGHT, 0, PICK_UP_HEIGHT})
+                if(occupied_positions.find({random_x + dx, random_y + dy}) != occupied_positions.end())
+                    occupied = true;
+        if(!occupied) {
+
+            /*
+                We generate a random chance for the type
+                The type is used to identify the pickup
+            */
+            chance = Utils::random_number(0, 100);
+
+            if (chance < 80) {
+                texture_rect = {
+                    (INT_32) pickup_sprites[0][0],
+                    (INT_32) pickup_sprites[0][1],
+                    (INT_32) pickup_sprites[0][2],
+                    (INT_32) pickup_sprites[0][3]
+                };
+                type = Utils::PickupType::SCORE;
+            }
+            else if (chance < 90) {
+                texture_rect = {
+                    (INT_32) pickup_sprites[2][0],
+                    (INT_32) pickup_sprites[2][1],
+                    (INT_32) pickup_sprites[2][2],
+                    (INT_32) pickup_sprites[2][3]
+                };
+                type = Utils::PickupType::HEALTH;
+            }
+            else if (chance < 95) {
+                texture_rect = {
+                    (INT_32) pickup_sprites[3][0],
+                    (INT_32) pickup_sprites[3][1],
+                    (INT_32) pickup_sprites[3][2],
+                    (INT_32) pickup_sprites[3][3]
+                };
+                type = Utils::PickupType::SLOW_TIME;
+            }
+            else {
+                texture_rect = {
+                    (INT_32) pickup_sprites[2][0],
+                    (INT_32) pickup_sprites[2][1],
+                    (INT_32) pickup_sprites[2][2],
+                    (INT_32) pickup_sprites[2][3]
+                };
+                type = Utils::PickupType::CLEAR_ROAD;
+            }
+
             occupied_positions.insert({random_x, random_y});
-            pickups.push_back(Pickup(random_x, random_y, PICK_UP_WIDTH, PICK_UP_HEIGHT));
+            pickups.push_back(Pickup(random_x, random_y, PICK_UP_WIDTH, PICK_UP_HEIGHT, type, texture_rect));
 
             // Check if the new pickup collides with any of the existing cars
             if(__collide_with_cars__(pickups.back())) {
@@ -433,4 +500,60 @@ void Application::__slow_down_cars__() {
     std::this_thread::sleep_for(std::chrono::seconds(SLOW_TIME_DURATION));
 
     speed_factor = original_speed_factor;
+}
+
+void Application::__load_spritesheets__() {
+    /*
+        Load the spritesheet for the player
+    */
+    SDL_Surface *cars_surface = IMG_Load("gfx/cars.png");
+    
+    if(cars_surface == nullptr)
+        Utils::print_sdl_image_error_message("Could not load gfx/cars.png");
+    else Utils::print_debug_message("Loaded gfx/cars.png");
+
+    cars_spritesheet = SDL_CreateTextureFromSurface(renderer, cars_surface);
+    SDL_FreeSurface(cars_surface);
+
+    /*
+        Load the background texture
+    */
+    SDL_Surface *bg = IMG_Load("gfx/background.png");
+    if(bg == nullptr)
+        Utils::print_sdl_image_error_message("Could not load gfx/background.png");
+    else Utils::print_debug_message("Loaded gfx/background.png");
+
+    background = SDL_CreateTextureFromSurface(renderer, bg);
+    SDL_FreeSurface(bg);
+
+    /*
+        Load the spritesheet for the pickups
+    */
+    SDL_Surface *pickups_surface = IMG_Load("gfx/pickups.png");
+    if(pickups_surface == nullptr)
+        Utils::print_sdl_image_error_message("Could not load gfx/pickups.png");
+    else Utils::print_debug_message("Loaded gfx/pickups.png");
+
+    pickups_spritesheet = SDL_CreateTextureFromSurface(renderer, pickups_surface);
+    SDL_FreeSurface(pickups_surface);
+}
+
+void Application::__init_player__() {
+    INT_32 random_lane = Utils::random_number(1, NUMBER_OF_LANES(WINDOW_WIDTH));
+    INT_32 random_sprite = Utils::random_number(0, PLAYER_SPRITES_NUMBER - 1);
+
+    SDL_Rect player_texture_rect = {
+        (INT_32) player_sprites[random_sprite][0],
+        (INT_32) player_sprites[random_sprite][1],
+        (INT_32) player_sprites[random_sprite][2],
+        (INT_32) player_sprites[random_sprite][3]
+    };
+
+    player = Player(
+        WINDOW_WIDTH - WALL_THICKNESS - (PLAYER_WIDTH * random_lane) + CAR_DISTANCE / 2,
+        PLAYER_Y,
+        PLAYER_WIDTH - CAR_DISTANCE,
+        PLAYER_HEIGHT,
+        player_texture_rect
+    );
 }

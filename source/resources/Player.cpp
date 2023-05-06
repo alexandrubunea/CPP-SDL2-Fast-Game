@@ -1,9 +1,8 @@
 #include <SDL.h>
 
 #include "../headers/Player.hpp"
-#include "../headers/Core.hpp"
 
-Player::Player(): GameObject(0, 0, Utils::Vector2D(0, 0)) {
+Player::Player(): GameObject(0, 0, Utils::Vector2D(0, 0), {0, 0, 0, 0}) {
     score = 0;
 }
 
@@ -11,8 +10,9 @@ Player::Player(
     float x,
     float y,
     UINT_32 w,
-    UINT_32 h
-): GameObject(w, h, Utils::Vector2D(x, y)) {
+    UINT_32 h,
+    SDL_Rect txt_rect
+): GameObject(w, h, Utils::Vector2D(x, y), txt_rect) {
     score = 0;
 }
 

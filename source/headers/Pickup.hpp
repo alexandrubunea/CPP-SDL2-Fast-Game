@@ -18,7 +18,7 @@ private:
         PickupType enum
         Represents the type of a pickup
     */
-    PickupType type;
+    Utils::PickupType type;
 
     /*
         INT_32 key
@@ -38,7 +38,9 @@ public:
         float, 
         float,
         UINT_32, 
-        UINT_32
+        UINT_32,
+        Utils::PickupType,
+        SDL_Rect
     );
 
     /*
@@ -49,7 +51,7 @@ public:
     /*
         Returns the type of the pickup
     */
-    PickupType get_type();
+    Utils::PickupType get_type();
 
     /*
         Returns the key of the pickup

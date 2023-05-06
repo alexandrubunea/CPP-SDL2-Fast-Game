@@ -9,6 +9,7 @@
 #include <vector>
 #include <bitset>
 #include <SDL.h>
+#include <SDL_image.h>
 
 #include "Core.hpp"
 #include "Player.hpp"
@@ -34,10 +35,10 @@ private:
         This enum is used to check the status of the window.
         It can be either running, closed or paused.
     */
-    WindowStatus WINDOW_STATUS;
+    Utils::WindowStatus WINDOW_STATUS;
 
     // SDL_Rects for the background, the walls and the bottom bar
-    SDL_Rect background;
+    SDL_Rect background_rect;
     SDL_Rect left_wall;
     SDL_Rect right_wall;
     SDL_Rect bottom_bar;
@@ -50,6 +51,65 @@ private:
     float speed_factor; // Speed factor for the cars
 
     std::vector<Pickup> pickups; // Vector of pickups
+
+    SDL_Texture *background; // SDL_Texture for the background
+    SDL_Texture *cars_spritesheet; // SDL_Texture for the cars spritesheet
+    SDL_Texture *pickups_spritesheet; // SDL_Texture for the pickup spritesheet
+    /*
+        Car sprites
+        This array contains the sprites coordinates for the cars.
+    */
+    const UINT_32 car_sprites[CAR_SPRITES_NUMBER][4] = {
+        {7, 16, 52, 135},
+        {67, 17, 47, 91},
+        {130, 16, 48, 93},
+        {190, 16, 48, 97},
+        {247, 20, 52, 92},
+        {308, 20, 52, 92},
+        {367, 20, 52, 92},
+        {426, 21, 60, 137},
+        {65, 120, 51, 99},
+        {127, 120, 51, 99},
+        {189, 120, 51, 99},
+        {247, 213, 52, 92},
+        {308, 123, 52, 92},
+        {367, 123, 52, 92},
+        {7, 192, 52, 135},
+        {64, 226, 55, 103},
+        {124, 226, 55, 103},
+        {186, 226, 55, 103},
+        {248, 226, 55, 103},
+        {308, 223, 55, 106},
+        {366, 226, 55, 103},
+        {10, 346, 45, 86},
+        {65, 346, 45, 86},
+        {122, 346, 45, 86},
+        {178, 346, 45, 86},
+        {236, 346, 45, 86}
+    };
+
+    /*
+        Player sprites
+        This array contains the sprites coordinates for the player.
+    */
+    const UINT_32 player_sprites[PLAYER_SPRITES_NUMBER][4] = {
+        {7, 446, 51, 96},
+        {72, 446, 51, 96},
+        {137, 446, 51, 96},
+        {200, 446, 51, 96}
+    };
+
+    /*
+        Pickup sprites
+        This array contains the sprites coordinates for the pickups.
+    */
+    const UINT_32 pickup_sprites[PICKUP_SPRITES_NUMBER][4] = {
+        {0, 0, 10, 10},
+        {10, 0, 10, 10},
+        {10, 0, 10, 10},
+        {10, 10, 10, 10}
+    };
+
 private:
     /*
         __loop__ method
@@ -99,6 +159,18 @@ private:
         This method slows down the cars.
     */
     void __slow_down_cars__();
+
+    /*
+        __load_spritesheets__ method
+        This method loads the spritesheets.
+    */
+    void __load_spritesheets__();
+
+    /*
+        __init_player__ method
+        This method initializes the player.
+    */
+    void __init_player__();
 public:
     /*
         Application constructor

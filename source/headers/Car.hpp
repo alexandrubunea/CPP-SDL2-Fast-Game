@@ -27,7 +27,8 @@ public:
         float, 
         float,
         UINT_32, 
-        UINT_32
+        UINT_32,
+        SDL_Rect
     );
 
     /*

@@ -1,18 +1,41 @@
-#include <iostream>
 #include <random>
 #include <SDL.h>
+#include <SDL_image.h>
 
 #include "../headers/Core.hpp"
 
+namespace Utils {
+    std::ofstream log_file = std::ofstream("log.txt");
+    bool CRASH = false;
+    bool DEBUG_MODE = false;
+}
+
 void Utils::print_sdl_error_message(std::string message) {
-    std::cout << "[___ERROR___]\n";
-    std::cout << "Message: " << message << '\n';
-    std::cout << "SDL_GetError(): " << SDL_GetError() << '\n';
-    std::cout << "-------------\n";
+    log_file << "[___ERROR___]\n";
+    log_file << "Message: " << message << '\n';
+    log_file << "SDL_GetError(): " << SDL_GetError() << '\n';
+    log_file << "-------------\n";
+}
+
+void Utils::print_sdl_image_error_message(std::string message) {
+    log_file << "[___ERROR___]\n";
+    log_file << "Message: " << message << '\n';
+    log_file << "IMG_GetError(): " << IMG_GetError() << '\n';
+    log_file << "-------------\n";
+}
+
+void Utils::set_crash(bool crash) {
+    CRASH = crash;
+}
+
+void Utils::set_debug_mode(bool debug_mode) {
+    DEBUG_MODE = debug_mode;
 }
 
 void Utils::print_debug_message(std::string message) {
-    std::cout << "[DEBUG]: " << message << '\n';
+    if(!DEBUG_MODE) 
+        return;
+    log_file << "[DEBUG]: " << message << '\n';
 }
 
 float Utils::hire_time_in_seconds() {

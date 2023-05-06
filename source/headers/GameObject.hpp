@@ -19,6 +19,7 @@ private:
     Utils::Vector2D position; // position
 
     SDL_Rect rect; // rectangle
+    SDL_Rect texture_rect; // texture rectangle
     SDL_Color color; // color
 public:
     /*
@@ -30,7 +31,8 @@ public:
     GameObject(
         UINT_32,
         UINT_32,
-        Utils::Vector2D
+        Utils::Vector2D,
+        SDL_Rect
     );
 
     /*
@@ -41,8 +43,10 @@ public:
     /*
         Renders the game object
         @param renderer: renderer
+        @param sprite_sheet: sprite sheet
+
     */
-    void render(SDL_Renderer*);
+    void render(SDL_Renderer*, SDL_Texture*);
 
     /*
         Updates the position of the game object
