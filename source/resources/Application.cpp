@@ -92,6 +92,22 @@ Application::Application(
         renderer
     );
 
+    // Initialize the lives text
+    SDL_Rect lives_text_rect = { 
+        (INT_32) WINDOW_WIDTH / 8 * 5, 
+        (INT_32) WINDOW_HEIGHT - BOTTOM_BAR_HEIGHT + 20, 
+        (INT_32) WINDOW_WIDTH / 8, 
+        BOTTOM_BAR_HEIGHT / 2
+    };
+    lives_text = new GUI_Text(
+        "LIVES: " + std::to_string(player.get_lives()),
+        "gfx/fonts/Kanit.ttf",
+        30,
+        { 255, 255, 255, 255 },
+        lives_text_rect,
+        renderer
+    );
+
     // Load the spritesheets
     __load_spritesheets__();
 
@@ -253,6 +269,10 @@ void Application::__render__() {
     // Score
     score_text->update_text("SCORE: " + std::to_string(player.get_score()), renderer);
     score_text->render(renderer);
+
+    // Lives
+    lives_text->update_text("LIVES: " + std::to_string(player.get_lives()), renderer);
+    lives_text->render(renderer);
 
     // Present the renderer
     SDL_RenderPresent(renderer);
@@ -496,10 +516,10 @@ void Application::__spawn_pickups__() {
             }
             else {
                 texture_rect = {
-                    (INT_32) pickup_sprites[2][0],
-                    (INT_32) pickup_sprites[2][1],
-                    (INT_32) pickup_sprites[2][2],
-                    (INT_32) pickup_sprites[2][3]
+                    (INT_32) pickup_sprites[1][0],
+                    (INT_32) pickup_sprites[1][1],
+                    (INT_32) pickup_sprites[1][2],
+                    (INT_32) pickup_sprites[1][3]
                 };
                 type = Utils::PickupType::CLEAR_ROAD;
             }

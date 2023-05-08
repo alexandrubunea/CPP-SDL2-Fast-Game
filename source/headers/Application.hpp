@@ -17,6 +17,7 @@
 #include "Car.hpp"
 #include "Pickup.hpp"
 #include "GUI/Text.hpp"
+#include "GUI/Menu.hpp"
 
 
 /*
@@ -46,6 +47,7 @@ private:
     SDL_Rect bottom_bar;
 
     GUI_Text* score_text; // GUI_Text for the score
+    GUI_Text* lives_text; // GUI_Text for the lives
 
     std::bitset<NUMBER_OF_KEYS> keyboard; // Bitset for the keyboard
 
@@ -59,6 +61,11 @@ private:
     SDL_Texture *background; // SDL_Texture for the background
     SDL_Texture *cars_spritesheet; // SDL_Texture for the cars spritesheet
     SDL_Texture *pickups_spritesheet; // SDL_Texture for the pickup spritesheet
+    
+    // Menus
+    GUI_Menu* main_menu;
+    GUI_Menu* pause_menu;
+
     /*
         Car sprites
         This array contains the sprites coordinates for the cars.
@@ -110,7 +117,7 @@ private:
     const UINT_32 pickup_sprites[PICKUP_SPRITES_NUMBER][4] = {
         {0, 0, 10, 10},
         {10, 0, 10, 10},
-        {10, 0, 10, 10},
+        {0, 10, 10, 10},
         {10, 10, 10, 10}
     };
 

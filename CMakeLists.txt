@@ -32,6 +32,8 @@ add_executable(Fast
     source/resources/Car.cpp
     source/resources/Pickup.cpp
     source/resources/GUI/Text.cpp
+    source/resources/GUI/Button.cpp
+    source/resources/GUI/Menu.cpp
 )
 
 target_link_libraries(Fast ${SDL2_IMAGE_LIBRARIES} ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES})

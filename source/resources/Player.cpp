@@ -4,6 +4,7 @@
 
 Player::Player(): GameObject(0, 0, Utils::Vector2D(0, 0), {0, 0, 0, 0}) {
     score = 0;
+    lives = 0;
 }
 
 Player::Player(
@@ -14,6 +15,7 @@ Player::Player(
     SDL_Rect txt_rect
 ): GameObject(w, h, Utils::Vector2D(x, y), txt_rect) {
     score = 0;
+    lives = 3;
 }
 
 Player::~Player() {
