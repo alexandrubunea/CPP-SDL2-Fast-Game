@@ -1,6 +1,7 @@
 #include <random>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 
 #include "../headers/Core.hpp"
 
@@ -21,6 +22,13 @@ void Utils::print_sdl_image_error_message(std::string message) {
     log_file << "[___ERROR___]\n";
     log_file << "Message: " << message << '\n';
     log_file << "IMG_GetError(): " << IMG_GetError() << '\n';
+    log_file << "-------------\n";
+}
+
+void Utils::print_ttf_error_message(std::string message) {
+    log_file << "[___ERROR___]\n";
+    log_file << "Message: " << message << '\n';
+    log_file << "TTF_GetError(): " << TTF_GetError() << '\n';
     log_file << "-------------\n";
 }
 

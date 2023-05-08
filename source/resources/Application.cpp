@@ -25,6 +25,12 @@ Application::Application(
         return;
     } else Utils::print_debug_message("SDL_Image was initialized successfully.");
 
+    // Initialize SDL_ttf
+    if(TTF_Init() == -1) {
+        Utils::print_ttf_error_message("An error occurred during TTF_Init.");
+        return;
+    } else Utils::print_debug_message("SDL_ttf was initialized successfully.");
+
     // Initialize SDL_CreateWindow
     window = SDL_CreateWindow(WINDOW_NAME.c_str(), 
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -70,6 +76,22 @@ Application::Application(
     // Initialize the speed factor
     speed_factor = INITIAL_GAME_SPEED;
 
+    // Initialize the score text
+    SDL_Rect score_text_rect = { 
+        (INT_32) WINDOW_WIDTH / 8, 
+        (INT_32) WINDOW_HEIGHT - BOTTOM_BAR_HEIGHT + 20, 
+        (INT_32) WINDOW_WIDTH / 8, 
+        BOTTOM_BAR_HEIGHT / 2
+    };
+    score_text = new GUI_Text(
+        "SCORE: " + std::to_string(player.get_score()),
+        "gfx/fonts/Kanit.ttf",
+        30,
+        { 255, 255, 255, 255 },
+        score_text_rect,
+        renderer
+    );
+
     // Load the spritesheets
     __load_spritesheets__();
 
@@ -85,6 +107,10 @@ Application::~Application() {
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
+
+    IMG_Quit();
+
+    TTF_Quit();
 
     if(Utils::CRASH)
         Utils::print_debug_message("Application crashed.");
@@ -204,9 +230,29 @@ void Application::__render__() {
     for(Pickup pickup : pickups)
         pickup.render(renderer, pickups_spritesheet);
 
-        // UI
+    /*
+        If the speed factor is less than the initial game speed, 
+        draw a blue filter over the screen
+    */
+    if(speed_factor < INITIAL_GAME_SPEED) {
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+        SDL_Rect blue_filter;
+        blue_filter.x = blue_filter.y = 0;
+        blue_filter.w = WINDOW_WIDTH;
+        blue_filter.h = WINDOW_HEIGHT;
+
+        SDL_SetRenderDrawColor(renderer, 121, 245, 240, 80);
+        SDL_RenderFillRect(renderer, &blue_filter);
+    }
+
+    // UI
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(renderer, &bottom_bar);
+
+    // Score
+    score_text->update_text("SCORE: " + std::to_string(player.get_score()), renderer);
+    score_text->render(renderer);
 
     // Present the renderer
     SDL_RenderPresent(renderer);
@@ -321,14 +367,6 @@ void Application::__gameplay__() {
         [&collided_pickups](Pickup i) { return collided_pickups.find(i) != collided_pickups.end(); }), pickups.end());
     pickups.erase(std::remove_if(pickups.begin(), pickups.end(),
         [](Pickup i) { return i.get_position().y >= WIN_HEIGHT; }), pickups.end());
-
-    // Change the color of the collided cars
-    for(Car &car : cars) {
-        if(player.collide(car))
-            car.change_color({255, 0, 0, 255});
-        else
-            car.change_color({255, 255, 255, 255});
-    }
 
     // Decrease the player lives if it collides with a car
     if(__collide_with_cars__(player)) {

@@ -160,6 +160,14 @@ namespace Utils {
         This function sets the debug mode flag.
         @param debug_mode: the debug mode flag
     */
+
+    /*
+        print_ttf_error_message function
+        This function prints an SDL_ttf error message.
+        @param message: the message to print
+    */
+    void print_ttf_error_message(std::string);
+
     void set_debug_mode(bool);
 
     /*

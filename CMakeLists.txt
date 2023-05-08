@@ -18,7 +18,10 @@ find_package(SDL2 REQUIRED)
 set(SDL2_IMAGE_INCLUDE_DIRS "C:/SDL2/SDL2_image/x86_64-w64-mingw32/include/SDL2")
 set(SDL2_IMAGE_LIBRARIES "C:/SDL2/SDL2_image/x86_64-w64-mingw32/lib/libSDL2_image.dll.a")
 
-include_directories(${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
+set(SDL2_TTF_INCLUDE_DIRS "C:/SDL2/SDL2_ttf/x86_64-w64-mingw32/include/SDL2")
+set(SDL2_TTF_LIBRARIES "C:/SDL2/SDL2_ttf/x86_64-w64-mingw32/lib/libSDL2_ttf.dll.a")
+
+include_directories(${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} source)
 
 add_executable(Fast 
     source/main.cpp
@@ -28,14 +31,17 @@ add_executable(Fast
     source/resources/Player.cpp
     source/resources/Car.cpp
     source/resources/Pickup.cpp
+    source/resources/GUI/Text.cpp
 )
 
-target_link_libraries(Fast ${SDL2_IMAGE_LIBRARIES} ${SDL2_LIBRARIES})
+target_link_libraries(Fast ${SDL2_IMAGE_LIBRARIES} ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES})
 
 message(STATUS "SDL2_INCLUDE_DIRS: " ${SDL2_INCLUDE_DIRS})
 message(STATUS "SDL2_LIBRARIES: " ${SDL2_LIBRARIES})
 message(STATUS "SDL2_IMAGE_INCLUDE_DIRS: " ${SDL2_IMAGE_INCLUDE_DIRS})
 message(STATUS "SDL2_IMAGE_LIBRARIES: " ${SDL2_IMAGE_LIBRARIES})
+message(STATUS "SDL2_TTF_INCLUDE_DIRS: " ${SDL2_TTF_INCLUDE_DIRS})
+message(STATUS "SDL2_TTF_LIBRARIES: " ${SDL2_TTF_LIBRARIES})
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

@@ -10,11 +10,13 @@
 #include <bitset>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 
 #include "Core.hpp"
 #include "Player.hpp"
 #include "Car.hpp"
 #include "Pickup.hpp"
+#include "GUI/Text.hpp"
 
 
 /*
@@ -42,6 +44,8 @@ private:
     SDL_Rect left_wall;
     SDL_Rect right_wall;
     SDL_Rect bottom_bar;
+
+    GUI_Text* score_text; // GUI_Text for the score
 
     std::bitset<NUMBER_OF_KEYS> keyboard; // Bitset for the keyboard
 
@@ -71,7 +75,7 @@ private:
         {65, 120, 51, 99},
         {127, 120, 51, 99},
         {189, 120, 51, 99},
-        {247, 213, 52, 92},
+        {247, 123, 52, 92},
         {308, 123, 52, 92},
         {367, 123, 52, 92},
         {7, 192, 52, 135},

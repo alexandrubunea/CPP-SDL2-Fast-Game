@@ -21,7 +21,7 @@ Player::~Player() {
 }
 
 void Player::increase_score(UINT_32 amount) {
-    score += amount * 10;
+    score += amount;
 }
 
 UINT_32 Player::get_score() {
